@@ -1,5 +1,5 @@
 ﻿{
-	"version": 1739412990,
+	"version": 1739422766,
 	"fileList": [
 		"data.js",
 		"c2runtime.js",
@@ -33,6 +33,11 @@
 		"images/home-sheet1.png",
 		"images/top-sheet0.png",
 		"images/btnback-sheet0.png",
+		"images/boom-sheet0.png",
+		"images/boom-sheet1.png",
+		"media/click.ogg",
+		"media/boom.ogg",
+		"media/endgame.ogg",
 		"icon-16.png",
 		"icon-32.png",
 		"icon-114.png",
