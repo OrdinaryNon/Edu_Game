@@ -1,5 +1,5 @@
 ﻿{
-	"version": 1739433047,
+	"version": 1739438213,
 	"fileList": [
 		"data.js",
 		"c2runtime.js",
@@ -44,6 +44,7 @@
 		"images/btnn_p2-sheet0.png",
 		"images/btnx-sheet0.png",
 		"images/bg_w-sheet0.png",
+		"images/bg_black-sheet0.png",
 		"media/click.ogg",
 		"media/boom.ogg",
 		"media/endgame.ogg",
