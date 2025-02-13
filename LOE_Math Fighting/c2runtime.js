@@ -23700,6 +23700,7 @@ cr.getObjectRefTable = function () { return [
 	cr.system_object.prototype.acts.SetLayerVisible,
 	cr.plugins_.TextBox.prototype.acts.SetFocus,
 	cr.plugins_.TextBox.prototype.acts.SetCSSStyle,
+	cr.plugins_.TextBox.prototype.acts.SetEnabled,
 	cr.plugins_.Audio.prototype.acts.Stop,
 	cr.behaviors.Flash.prototype.acts.Flash,
 	cr.behaviors.Platform.prototype.acts.SimulateControl,
