@@ -23525,8 +23525,8 @@ cr.behaviors.solid = function(runtime)
 }());
 cr.getObjectRefTable = function () { return [
 	cr.plugins_.Audio,
-	cr.plugins_.Text,
 	cr.plugins_.Sprite,
+	cr.plugins_.Text,
 	cr.plugins_.TextBox,
 	cr.plugins_.Touch,
 	cr.behaviors.EightDir,
@@ -23538,7 +23538,6 @@ cr.getObjectRefTable = function () { return [
 	cr.plugins_.Sprite.prototype.acts.SetInstanceVar,
 	cr.system_object.prototype.exps["int"],
 	cr.system_object.prototype.exps.random,
-	cr.plugins_.TextBox.prototype.acts.SetFocus,
 	cr.plugins_.TextBox.prototype.acts.SetCSSStyle,
 	cr.system_object.prototype.cnds.EveryTick,
 	cr.plugins_.Text.prototype.acts.SetText,
@@ -23565,6 +23564,7 @@ cr.getObjectRefTable = function () { return [
 	cr.plugins_.TextBox.prototype.acts.SetText,
 	cr.system_object.prototype.cnds.Else,
 	cr.plugins_.Sprite.prototype.cnds.CompareFrame,
+	cr.plugins_.Audio.prototype.acts.Play,
 	cr.plugins_.Sprite.prototype.acts.SetScale,
 	cr.plugins_.Sprite.prototype.acts.SetAnim,
 	cr.plugins_.Text.prototype.acts.SetFontColor,
@@ -23575,8 +23575,10 @@ cr.getObjectRefTable = function () { return [
 	cr.plugins_.Sprite.prototype.cnds.CompareY,
 	cr.plugins_.Sprite.prototype.acts.SetPosToObject,
 	cr.system_object.prototype.acts.GoToLayoutByName,
-	cr.plugins_.Audio.prototype.acts.Play,
+	cr.plugins_.Audio.prototype.acts.Stop,
+	cr.plugins_.TextBox.prototype.acts.SetFocus,
 	cr.behaviors.Platform.prototype.acts.SimulateControl,
-	cr.plugins_.Sprite.prototype.cnds.IsAnimPlaying
+	cr.plugins_.Sprite.prototype.cnds.IsAnimPlaying,
+	cr.system_object.prototype.acts.SetLayerVisible
 ];};
 
