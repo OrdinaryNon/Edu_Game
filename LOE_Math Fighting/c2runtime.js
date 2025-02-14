@@ -24504,9 +24504,10 @@ cr.getObjectRefTable = function () { return [
 	cr.plugins_.TextBox.prototype.acts.SetFocus,
 	cr.plugins_.TextBox.prototype.acts.SetCSSStyle,
 	cr.plugins_.TextBox.prototype.acts.SetEnabled,
-	cr.plugins_.Audio.prototype.acts.Stop,
+	cr.plugins_.Browser.prototype.cnds.IsFullscreen,
+	cr.plugins_.Browser.prototype.acts.CancelFullScreen,
 	cr.plugins_.Browser.prototype.acts.RequestFullScreen,
-	cr.plugins_.Browser.prototype.acts.LockOrientation,
+	cr.plugins_.Audio.prototype.acts.Stop,
 	cr.behaviors.Flash.prototype.acts.Flash,
 	cr.behaviors.Platform.prototype.acts.SimulateControl,
 	cr.plugins_.Sprite.prototype.cnds.IsAnimPlaying
