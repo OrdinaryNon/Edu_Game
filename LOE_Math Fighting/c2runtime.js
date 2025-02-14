@@ -24507,6 +24507,7 @@ cr.getObjectRefTable = function () { return [
 	cr.plugins_.Touch.prototype.cnds.OnDoubleTapGesture,
 	cr.plugins_.Browser.prototype.cnds.IsFullscreen,
 	cr.plugins_.Browser.prototype.acts.CancelFullScreen,
+	cr.plugins_.Browser.prototype.acts.LockOrientation,
 	cr.plugins_.Browser.prototype.acts.RequestFullScreen,
 	cr.plugins_.Audio.prototype.acts.Stop,
 	cr.behaviors.Flash.prototype.acts.Flash,
