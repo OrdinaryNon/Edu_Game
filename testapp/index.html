@@ -13,7 +13,7 @@
             padding: 20px;
         }
         .container {
-            width: 300px;
+            width: 320px;
             background: #fff;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
@@ -23,9 +23,8 @@
             text-align: center;
             margin-bottom: 10px;
         }
-        .preview img {
+        video {
             width: 100%;
-            height: auto;
             border-radius: 8px;
             background-color: #ddd;
         }
@@ -42,6 +41,17 @@
             border-radius: 8px;
             margin: 4px 0 12px 0;
         }
+        button {
+            background: #4285f4;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #3367d6;
+        }
     </style>
 </head>
 <body>
@@ -52,16 +62,26 @@
         <div>
             <small>Input: Webcam</small>
         </div>
-        <img src="" alt="Preview Image" id="previewImage">
+        <video id="webcam" autoplay playsinline></video>
     </div>
 
     <div class="output" id="outputContainer">
-        <!-- ข้อมูลจะถูกเติมจาก JSON -->
+        <!-- ข้อมูลจาก JSON -->
     </div>
 </div>
 
 <script>
-    // กำหนดสีของแต่ละ label
+    // เปิดกล้องเมื่อโหลดหน้าเว็บ
+    const video = document.getElementById('webcam');
+    navigator.mediaDevices.getUserMedia({ video: true })
+        .then(stream => {
+            video.srcObject = stream;
+        })
+        .catch(err => {
+            console.error("ไม่สามารถเปิดกล้องได้:", err);
+        });
+
+    // สีของแต่ละ label
     const colors = {
         "ราดำ": "#d96b00",
         "ราสีชมพู": "#ffb6c1",
@@ -76,12 +96,12 @@
         .then(data => {
             const container = document.getElementById('outputContainer');
             data.forEach(item => {
-                // label + %
+                // แสดง label + %
                 const labelEl = document.createElement('div');
                 labelEl.classList.add('label');
                 labelEl.innerHTML = `<span>${item.label}</span><span>${item.percentage}%</span>`;
-                
-                // bar
+
+                // แถบสีเปอร์เซ็นต์
                 const barEl = document.createElement('div');
                 barEl.classList.add('bar');
                 barEl.style.width = item.percentage + '%';
