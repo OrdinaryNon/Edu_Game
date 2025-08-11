@@ -1,250 +1,59 @@
-<!DOCTYPE html>
-<html lang="th">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Teachable Machine Image Model – Styled UI</title>
-  <style>
-    :root {
-      --bg: #f7f7fb;
-      --card: #ffffff;
-      --text: #1f2937;
-      --muted: #6b7280;
-      --border: #e5e7eb;
-      --accent: #6366f1;
+<div>Teachable Machine Image Model</div>
+<button type="button" onclick="init()">Start</button>
+<div id="webcam-container"></div>
+<div id="label-container"></div>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+<script type="text/javascript">
+    // More API functions here:
+    // https://github.com/googlecreativelab/teachablemachine-community/tree/master/libraries/image
 
-      /* class color tokens */
-      --c-orange: #e0842b;   /* ราดา / ใบลำไยไม่เกิดโรค */
-      --c-pink:   #f3b5c9;   /* ราสนิม */
-      --c-purple: #6b46c1;   /* ราน้ำฝน */
-      --c-blue:   #5aa3ec;   /* เพลี้ยแป้ง */
-      --c-orange2:#f39c12;   /* ใบลำไยไม่เกิดโรค (เข้มกว่า) */
+    // the link to your model provided by Teachable Machine export panel
+    const URL = "./my_model/";
+
+    let model, webcam, labelContainer, maxPredictions;
+
+    // Load the image model and setup the webcam
+    async function init() {
+        const modelURL = URL + "model.json";
+        const metadataURL = URL + "metadata.json";
+
+        // load the model and metadata
+        // Refer to tmImage.loadFromFiles() in the API to support files from a file picker
+        // or files from your local hard drive
+        // Note: the pose library adds "tmImage" object to your window (window.tmImage)
+        model = await tmImage.load(modelURL, metadataURL);
+        maxPredictions = model.getTotalClasses();
+
+        // Convenience function to setup a webcam
+        const flip = true; // whether to flip the webcam
+        webcam = new tmImage.Webcam(200, 200, flip); // width, height, flip
+        await webcam.setup(); // request access to the webcam
+        await webcam.play();
+        window.requestAnimationFrame(loop);
+
+        // append elements to the DOM
+        document.getElementById("webcam-container").appendChild(webcam.canvas);
+        labelContainer = document.getElementById("label-container");
+        for (let i = 0; i < maxPredictions; i++) { // and class labels
+            labelContainer.appendChild(document.createElement("div"));
+        }
     }
 
-    * { box-sizing: border-box; }
-    body {
-      margin: 0; padding: 24px; background: var(--bg); color: var(--text);
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Noto Sans Thai, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
-    }
-    .container {
-      max-width: 820px; margin: 0 auto;
-    }
-    .title {
-      font-size: 20px; font-weight: 700; margin: 8px 0 16px;
+    async function loop() {
+        webcam.update(); // update the webcam frame
+        await predict();
+        window.requestAnimationFrame(loop);
     }
 
-    .grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
-    @media (min-width: 900px){ .grid { grid-template-columns: 360px 1fr; } }
-
-    .card {
-      background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 14px;
-      box-shadow: 0 10px 25px rgba(0,0,0,.04);
+    // run the webcam image through the image model
+    async function predict() {
+        // predict can take in an image, video or canvas html element
+        const prediction = await model.predict(webcam.canvas);
+        for (let i = 0; i < maxPredictions; i++) {
+            const classPrediction =
+                prediction[i].className + ": " + prediction[i].probability.toFixed(2);
+            labelContainer.childNodes[i].innerHTML = classPrediction;
+        }
     }
-
-    /* Webcam area */
-    .webcamWrap { position: relative; aspect-ratio: 1 / 1; border-radius: 10px; overflow: hidden; background: #bfc3c9; }
-    .webcamWrap canvas { width: 100% !important; height: 100% !important; display: block; }
-    .placeholder {
-      position: absolute; inset: 0; display: grid; place-items: center; color: #fff; opacity: .9;
-      font-size: 14px; text-align: center; padding: 12px;
-    }
-    .placeholder svg { width: 56px; height: 56px; opacity: .95; margin-bottom: 8px; }
-    .placeholder.hidden { display: none; }
-
-    .controls { display: flex; gap: 10px; margin-top: 12px; }
-    button {
-      appearance: none; border: 1px solid var(--border); background: #111827; color: #fff; cursor: pointer;
-      padding: 10px 14px; border-radius: 10px; font-weight: 600; font-size: 14px; letter-spacing: .2px;
-    }
-    button.secondary { background: #fff; color: var(--text); }
-
-    /* Output area */
-    .outputHeader { font-weight: 700; margin-bottom: 10px; }
-    .rows { display: flex; flex-direction: column; gap: 10px; }
-
-    .row { display: grid; grid-template-columns: 140px 1fr 60px; align-items: center; gap: 10px; }
-    .name { color: var(--text); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .bar {
-      position: relative; height: 32px; border-radius: 8px; background: #f3f4f6; overflow: hidden;
-      border: 1px solid var(--border);
-    }
-    .bar > span {
-      position: absolute; left: 0; top: 0; height: 100%; width: 0%;
-      display: block; border-radius: 8px; transition: width .25s ease;
-      background: var(--accent);
-    }
-    .pct { text-align: right; font-weight: 700; color: var(--muted); }
-
-    /* Tag color dots beside names */
-    .dot { width: 14px; height: 14px; border-radius: 50%; display: inline-block; margin-right: 8px; vertical-align: -2px; }
-
-    .legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; font-size: 12px; color: var(--muted); }
-    .legend .item { display: inline-flex; align-items: center; gap: 6px; background: #f9fafb; border: 1px solid var(--border); padding: 4px 8px; border-radius: 999px; }
-
-    .small { font-size: 12px; color: var(--muted); }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="title">Teachable Machine Image Model</div>
-
-    <div class="grid">
-      <div class="card">
-        <div class="webcamWrap">
-          <div class="placeholder" id="ph">
-            <div>
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M7 10V8a5 5 0 0 1 10 0v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-                <rect x="3" y="10" width="18" height="11" rx="2" stroke="currentColor" stroke-width="1.5"/>
-                <path d="M12 15v2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-              </svg>
-              <div>อนุญาตใช้กล้อง แล้วกด Start</div>
-            </div>
-          </div>
-          <!-- canvas will be injected here by tmImage.Webcam -->
-        </div>
-        <div class="controls">
-          <button id="btnStart">Start</button>
-          <button id="btnStop" class="secondary" disabled>Stop</button>
-        </div>
-        <div class="small" style="margin-top:8px;">ถ้าไม่เห็นภาพจากกล้อง ให้ตรวจสิทธิ์การเข้าถึงกล้องของเบราว์เซอร์</div>
-      </div>
-
-      <div class="card">
-        <div class="outputHeader">Output</div>
-        <div id="rows" class="rows" aria-live="polite"></div>
-        <div class="legend" id="legend"></div>
-      </div>
-    </div>
-  </div>
-
-  <!-- libs -->
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
-
-  <script>
-    const URL = "./my_model/"; // ปรับ path ตามที่คุณวางโมเดล
-
-    let model, webcam, rowsEl, legendEl, maxPredictions, phEl, btnStart, btnStop;
-
-    const classColors = {
-      "ราดา": "var(--c-orange)",
-      "ราสนิม": "var(--c-pink)",
-      "ราน้ำฝน": "var(--c-purple)",
-      "เพลี้ยแป้ง": "var(--c-blue)",
-      "ใบลำไยไม่เกิดโรค": "var(--c-orange2)"
-    };
-
-    async function loadModel(){
-      const modelURL = URL + "model.json";
-      const metadataURL = URL + "metadata.json";
-      model = await tmImage.load(modelURL, metadataURL);
-      maxPredictions = model.getTotalClasses();
-    }
-
-    function buildRows(names){
-      rowsEl.innerHTML = "";
-      names.forEach(name => {
-        const row = document.createElement("div");
-        row.className = "row";
-        const nameEl = document.createElement("div");
-        nameEl.className = "name";
-        const dot = document.createElement("span");
-        dot.className = "dot"; dot.style.background = classColors[name] || "var(--accent)";
-        nameEl.appendChild(dot);
-        nameEl.appendChild(document.createTextNode(name));
-
-        const bar = document.createElement("div");
-        bar.className = "bar";
-        const fill = document.createElement("span");
-        fill.style.background = classColors[name] || "var(--accent)";
-        bar.appendChild(fill);
-
-        const pct = document.createElement("div");
-        pct.className = "pct";
-        pct.textContent = "0%";
-
-        row.appendChild(nameEl);
-        row.appendChild(bar);
-        row.appendChild(pct);
-        rowsEl.appendChild(row);
-      });
-
-      // legend
-      legendEl.innerHTML = "";
-      names.forEach(n => {
-        const it = document.createElement("div");
-        it.className = "item";
-        const d = document.createElement("span");
-        d.className = "dot"; d.style.background = classColors[n] || "var(--accent)";
-        it.appendChild(d);
-        it.appendChild(document.createTextNode(n));
-        legendEl.appendChild(it);
-      });
-    }
-
-    async function init(){
-      btnStart.disabled = true;
-      await loadModel();
-
-      const flip = true;
-      webcam = new tmImage.Webcam(400, 400, flip); // จะถูกย่อให้เต็มกล่อง
-      await webcam.setup();
-      await webcam.play();
-      requestAnimationFrame(loop);
-
-      const wrap = document.querySelector('.webcamWrap');
-      wrap.appendChild(webcam.canvas);
-      phEl.classList.add('hidden');
-
-      // เตรียมแถวจากรายชื่อคลาสใน metadata
-      const meta = model.getClassLabels ? model.getClassLabels() : null;
-      const names = meta && meta.length ? meta : Array.from({length: model.getTotalClasses()}, (_,i)=>`Class ${i+1}`);
-      buildRows(names);
-
-      btnStop.disabled = false;
-    }
-
-    async function loop(){
-      webcam.update();
-      await predict();
-      requestAnimationFrame(loop);
-    }
-
-    async function predict(){
-      const prediction = await model.predict(webcam.canvas);
-      // sort by class order from metadata, not by probability, to keep stable rows
-      prediction.forEach((p, i) => {
-        const row = rowsEl.children[i];
-        if(!row) return;
-        const barFill = row.children[1].firstElementChild;
-        const pctEl = row.children[2];
-        const percent = Math.round(p.probability * 100);
-        barFill.style.width = percent + '%';
-        pctEl.textContent = percent + '%';
-      });
-    }
-
-    function stop(){
-      if (webcam) {
-        webcam.stop();
-      }
-      btnStart.disabled = false;
-      btnStop.disabled = true;
-      phEl.classList.remove('hidden');
-    }
-
-    // wire up buttons
-    window.addEventListener('DOMContentLoaded', () => {
-      rowsEl = document.getElementById('rows');
-      legendEl = document.getElementById('legend');
-      phEl = document.getElementById('ph');
-      btnStart = document.getElementById('btnStart');
-      btnStop = document.getElementById('btnStop');
-
-      btnStart.addEventListener('click', init);
-      btnStop.addEventListener('click', stop);
-    });
-  </script>
-</body>
-</html>
+</script>
