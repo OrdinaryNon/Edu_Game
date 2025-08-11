@@ -3,115 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Model Preview</title>
+    <title>Teachable Machine Preview</title>
     <style>
         body {
             font-family: Arial, sans-serif;
-            background-color: #f9f9f9;
             display: flex;
             justify-content: center;
             padding: 20px;
+            background-color: #f5f5f5;
         }
         .container {
-            width: 320px;
             background: #fff;
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
             padding: 15px;
+            width: 300px;
         }
-        .preview {
+        #webcam-container {
             text-align: center;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
         }
-        video {
-            width: 100%;
+        canvas {
             border-radius: 8px;
-            background-color: #ddd;
         }
-        .output {
-            margin-top: 15px;
-        }
-        .label {
+        .label-row {
             display: flex;
             justify-content: space-between;
             font-size: 14px;
+            margin-top: 4px;
         }
-        .bar {
-            height: 16px;
+        .bar-bg {
+            background: #f0f0f0;
             border-radius: 8px;
-            margin: 4px 0 12px 0;
+            height: 16px;
+            margin-top: 3px;
+            overflow: hidden;
         }
-        button {
-            background: #4285f4;
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-        button:hover {
-            background: #3367d6;
+        .bar-fill {
+            height: 100%;
+            border-radius: 8px;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="preview">
-        <button>📤 Export Model</button>
-        <div>
-            <small>Input: Webcam</small>
-        </div>
-        <video id="webcam" autoplay playsinline></video>
-    </div>
-
-    <div class="output" id="outputContainer">
-        <!-- ข้อมูลจาก JSON -->
-    </div>
+    <h3>Preview</h3>
+    <button type="button" onclick="init()">Start</button>
+    <div id="webcam-container"></div>
+    <div id="label-container"></div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
 <script>
-    // เปิดกล้องเมื่อโหลดหน้าเว็บ
-    const video = document.getElementById('webcam');
-    navigator.mediaDevices.getUserMedia({ video: true })
-        .then(stream => {
-            video.srcObject = stream;
-        })
-        .catch(err => {
-            console.error("ไม่สามารถเปิดกล้องได้:", err);
-        });
+    const URL = "./my_model/";
 
-    // สีของแต่ละ label
+    let model, webcam, labelContainer, maxPredictions;
+
+    // กำหนดสีของแต่ละคลาส
     const colors = {
         "ราดำ": "#d96b00",
-        "ราสีชมพู": "#ffb6c1",
+        "ราสีชมพู": "#ff6781",
         "ราน้ำฝน": "#9370db",
-        "เพลี้ยแป้ง": "#87cefa",
+        "เพลี้ยแป้ง": "#3b82f6",
         "ใบลำไยไม่เกิดโรค": "#ff8c00"
     };
 
-    // โหลดข้อมูลจาก JSON
-    fetch('data.json')
-        .then(res => res.json())
-        .then(data => {
-            const container = document.getElementById('outputContainer');
-            data.forEach(item => {
-                // แสดง label + %
-                const labelEl = document.createElement('div');
-                labelEl.classList.add('label');
-                labelEl.innerHTML = `<span>${item.label}</span><span>${item.percentage}%</span>`;
+    async function init() {
+        const modelURL = URL + "model.json";
+        const metadataURL = URL + "metadata.json";
 
-                // แถบสีเปอร์เซ็นต์
-                const barEl = document.createElement('div');
-                barEl.classList.add('bar');
-                barEl.style.width = item.percentage + '%';
-                barEl.style.backgroundColor = colors[item.label] || "#ccc";
+        model = await tmImage.load(modelURL, metadataURL);
+        maxPredictions = model.getTotalClasses();
 
-                container.appendChild(labelEl);
-                container.appendChild(barEl);
-            });
-        })
-        .catch(err => console.error(err));
+        const flip = true;
+        webcam = new tmImage.Webcam(224, 224, flip);
+        await webcam.setup();
+        await webcam.play();
+        window.requestAnimationFrame(loop);
+
+        document.getElementById("webcam-container").appendChild(webcam.canvas);
+        labelContainer = document.getElementById("label-container");
+    }
+
+    async function loop() {
+        webcam.update();
+        await predict();
+        window.requestAnimationFrame(loop);
+    }
+
+    async function predict() {
+        const prediction = await model.predict(webcam.canvas);
+
+        // ล้างผลลัพธ์เก่า
+        labelContainer.innerHTML = "";
+
+        prediction.forEach(p => {
+            const percent = Math.round(p.probability * 100);
+
+            // แถว label และ %
+            const labelRow = document.createElement("div");
+            labelRow.className = "label-row";
+            labelRow.innerHTML = `<span>${p.className}</span><span>${percent}%</span>`;
+
+            // progress bar
+            const barBg = document.createElement("div");
+            barBg.className = "bar-bg";
+
+            const barFill = document.createElement("div");
+            barFill.className = "bar-fill";
+            barFill.style.width = percent + "%";
+            barFill.style.backgroundColor = colors[p.className] || "#999";
+
+            barBg.appendChild(barFill);
+
+            labelContainer.appendChild(labelRow);
+            labelContainer.appendChild(barBg);
+        });
+    }
 </script>
 
 </body>
